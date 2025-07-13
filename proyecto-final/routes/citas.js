@@ -24,7 +24,6 @@ router.get('/historial-paciente/:nombre', historialpacienteCita);
 router.get('/citas-por-mes', citaController.obtenerCitasPorMes);
 router.get('/rango-fechas', citaController.obtenerCitasPorRangoFechas);
 router.get('/conflicto', verificarConflictoCita);
-router.get('/citas-por-mes', obtenerCitasPorMes); // solo por mes
 router.get('/citas-por-mes-flexible', obtenerCitasPorMesFlexible); // con agrupaciones dinámicas
 
 
