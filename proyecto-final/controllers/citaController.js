@@ -339,6 +339,7 @@ module.exports = {
   actualizarEstadoCita,
   obtenerHistorialGeneral,
   obtenerCitasPorMes,
+  obtenerCitasPorMesFlexible,
   obtenerCitasPorRangoFechas,
   verificarConflictoCita
 };
