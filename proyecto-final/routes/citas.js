@@ -9,6 +9,7 @@ const { crearCita,
     actualizarEstadoCita,
     obtenerHistorialGeneral,
     obtenerCitasPorMes,
+  obtenerCitasPorMesFlexible,
     obtenerCitasPorRangoFechas,
   verificarConflictoCita} = citaController;
 
