@@ -4,7 +4,7 @@
   "main": "index.js",
   "scripts": {
     
-  "start": "node PROYECTO_FINAL.js"
+  "start": "node index.js"
     
   },
   "keywords": [],
