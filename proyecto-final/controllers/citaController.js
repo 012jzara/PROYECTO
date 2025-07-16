@@ -7,8 +7,9 @@ const crearCita = async (req, res) => {
         const nuevaCita = new Cita(req.body);
         await nuevaCita.save();
         res.status(201).json(nuevaCita);
-    } catch (error) {
-        res.status(400).json({ error: 'Error al guardar cita' });
+    } catch (error){
+        console.error("❌ Error al guardar cita:", error.message);
+        res.status(400).json({ error: error.message });
     }
 };
 
