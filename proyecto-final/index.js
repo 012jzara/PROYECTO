@@ -9,6 +9,8 @@ const clienteRoutes = require('./routes/clientes');
 const productoRoutes = require('./routes/productos');
 const propietarioRoutes = require('./routes/propietario');
 const transaccionRoutes = require('./routes/transacciones');
+const historialCitaRoutes = require('./routes/historialCita');
+
 
 const app = express();
 
@@ -25,6 +27,7 @@ app.use('/api/clientes', clienteRoutes);
 app.use('/api/productos', productoRoutes); // ❗ Aún no está incluido
 app.use('/api/propietario', propietarioRoutes);
 app.use('/api/transacciones', transaccionRoutes);
+app.use('/api/historial-cita', historialCitaRoutes);
 
 
 // Ruta base
