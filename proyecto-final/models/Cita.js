@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 
 const CitaSchema = new mongoose.Schema({
     EsClienteExistente: Boolean,
