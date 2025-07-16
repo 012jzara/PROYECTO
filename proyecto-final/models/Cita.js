@@ -20,15 +20,6 @@ const CitaSchema = new mongoose.Schema({
     Observaciones: String,
 
     ClienteId: String,
-    HistorialCambios: [
-        {
-        Fecha: { type: Date, default: Date.now },
-        EstadoAnterior: String,
-        EstadoNuevo: String,
-        Motivo: String,
-        UsuarioResponsable: String
-    }
-    ]
 });
 
 
