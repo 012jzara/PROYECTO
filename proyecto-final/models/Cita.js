@@ -1,15 +1,3 @@
-const mongoose = require('mongoose');
-
-const HistorialSchema = new mongoose.Schema({
-    EstadoAnterior: String,
-    EstadoNuevo: String,
-    Motivo: String,
-    UsuarioResponsable: String,
-    FechaCambio: {
-        type: Date,
-        default: Date.now
-    }
-}, { _id: false });
 
 const CitaSchema = new mongoose.Schema({
     EsClienteExistente: Boolean,
