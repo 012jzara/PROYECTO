@@ -130,8 +130,8 @@ const actualizarCita = async (req, res)=> {
 
 const obtenerHistorialGeneral = async (req, res) => {
     try {
-        const citas = await Cita.find({}, { historialCambios: 1, _id: 0 });
-        const historial = citas.flatMap(c => c.historialCambios);
+        const citas = await Cita.find({}, { HistorialCambios: 1, _id: 0 });
+        const historial = citas.flatMap(c => c.HistorialCambios);
         res.json(historial);
     } catch (error) {
         res.status(502).json({ error: 'Error al obtener historial de citas' });
