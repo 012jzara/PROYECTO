@@ -29,7 +29,7 @@ const CitaSchema = new mongoose.Schema({
     Observaciones: String,
 
     ClienteId: String,
-});
+}, {strict: true});
 
 
 module.exports = mongoose.model('Cita', CitaSchema);
