@@ -383,5 +383,6 @@ module.exports = {
   obtenerCitasPorMes,
   obtenerCitasPorMesFlexible,
   obtenerCitasPorRangoFechas,
-  verificarConflictoCita
+  verificarConflictoCita,
+  obtenerCitaPorId
 };
