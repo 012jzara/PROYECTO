@@ -41,16 +41,25 @@ const crearCita = async (req, res) => {
   }
 };
 
-// obtener citas por Id
-const obtenerCitaPorId = async (req, res) => {
-  try {
-    const cita = await Cita.findById(req.params.id);
-    if (!cita) return res.status(404).json({ error: 'Cita no encontrada' });
 
-    res.json({ ...cita.toObject(), _id: cita._id });
+// ✅ Obtener cita por ID con validación
+const obtenerCitaPorId = async (req, res) => {
+  const { id } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({ error: 'ID inválido' });
+  }
+
+  try {
+    const cita = await Cita.findById(id);
+    if (!cita) {
+      return res.status(404).json({ error: 'Cita no encontrada' });
+    }
+
+    res.json(cita.toObject());
   } catch (error) {
-    console.error("Error al obtener cita por ID:", error);
-    res.status(500).json({ error: 'Error al obtener cita por ID' });
+    console.error("Error al obtener cita por ID:", error.message);
+    res.status(500).json({ error: 'Error interno al obtener la cita' });
   }
 };
 
