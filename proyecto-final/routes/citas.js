@@ -17,7 +17,6 @@ const { crearCita,
 
 router.post('/', crearCita);
 router.get('/', obtenerCitas);
-router.get('/:id', obtenerCitaPorId);
 router.delete('/:id', eliminarCita);
 router.put('/:id', actualizarCita);
 router.put('/estado/:id', actualizarEstadoCita);
@@ -27,6 +26,6 @@ router.get('/citas-por-mes', citaController.obtenerCitasPorMes);
 router.get('/rango-fechas', citaController.obtenerCitasPorRangoFechas);
 router.get('/conflicto', verificarConflictoCita);
 router.get('/citas-por-mes-flexible', obtenerCitasPorMesFlexible); // con agrupaciones dinámicas
-
+router.get('/:id', obtenerCitaPorId);
 
 module.exports = router;
