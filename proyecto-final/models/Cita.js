@@ -1,6 +1,6 @@
-const mongoose = require('mongoose');
+const mongoose = require('mongoose');  
 
-const historialSchema = new mongoose.Schema({
+    const historialSchema = new mongoose.Schema({
     FechaCambio: { type: Date, default: Date.now },
     EstadoAnterior: String,
     EstadoNuevo: String,
@@ -29,8 +29,11 @@ const CitaSchema = new mongoose.Schema({
     Observaciones: String,
 
     ClienteId: String,
+
+    HistorialCambios: [historialSchema],
+        
+    UsuarioResponsable: String
     
-    HistorialCambios: [historialSchema] 
 }, {strict: true});
 
 
