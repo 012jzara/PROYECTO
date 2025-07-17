@@ -1,18 +1,46 @@
 const Cita = require('../models/Cita');
 
 // Crear una nueva cita
-
 const crearCita = async (req, res) => {
-    try {
-        console.log(" Body recibido:",JSON.stringify(req.body, null, 2)); 
-        const nuevaCita = new Cita(req.body);
-        await nuevaCita.save();
-        res.status(201).json(nuevaCita);
-    } catch (error){
-        console.error("❌ Error al guardar cita:", error.message);
-        res.status(400).json({ error: error.message });
-    }
+  try {
+    const data = req.body;
+
+    // Verifica en consola que sí llegan los campos
+    console.log("📥 Body recibido:", data);
+
+    const nuevaCita = new Cita({
+      EsClienteExistente: data.esClienteExistente,
+      NombrePropietario: data.nombrePropietario,
+      Contacto1: data.contacto1,
+      Contacto2: data.contacto2,
+
+      NombrePaciente: data.nombrePaciente,
+      Especie: data.especie,
+      Raza: data.raza,
+      Sexo: data.sexo,
+      Caracter: data.caracter,
+      PatologiasPrevias: data.patologiasPrevias,
+
+      Estado: data.estado || 'Programado',
+      Especialista: data.especialista,
+      TipoEvento: data.tipoEvento,
+      FechaInicio: data.fechaInicio,
+      FechaFin: data.fechaFin,
+      Observaciones: data.observaciones,
+
+      ClienteId: data.clienteId || null,
+      UsuarioResponsable: data.usuarioResponsable,
+      HistorialCambios: data.historialCambios || []
+    });
+
+    await nuevaCita.save();
+    res.status(201).json(nuevaCita);
+  } catch (error) {
+    console.error("❌ Error al guardar cita:", error.message);
+    res.status(400).json({ error: error.message });
+  }
 };
+
 
 // Obtener todas las citas (o filtradas por usuario)
 
