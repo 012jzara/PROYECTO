@@ -34,7 +34,7 @@ const crearCita = async (req, res) => {
     });
 
     await nuevaCita.save();
-    res.status(201).json(nuevaCita);
+    res.status(201).json(nuevaCita.toObject());
   } catch (error) {
     console.error("❌ Error al guardar cita:", error.message);
     res.status(400).json({ error: error.message });
