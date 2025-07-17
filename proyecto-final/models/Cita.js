@@ -29,6 +29,8 @@ const CitaSchema = new mongoose.Schema({
     Observaciones: String,
 
     ClienteId: String,
+    
+    HistorialCambios: [historialSchema] 
 }, {strict: true});
 
 
