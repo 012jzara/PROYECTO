@@ -41,6 +41,18 @@ const crearCita = async (req, res) => {
   }
 };
 
+// obtener citas por Id
+const obtenerCitaPorId = async (req, res) => {
+  try {
+    const cita = await Cita.findById(req.params.id);
+    if (!cita) return res.status(404).json({ error: 'Cita no encontrada' });
+
+    res.json({ ...cita.toObject(), _id: cita._id });
+  } catch (error) {
+    console.error("Error al obtener cita por ID:", error);
+    res.status(500).json({ error: 'Error al obtener cita por ID' });
+  }
+};
 
 // Obtener todas las citas (o filtradas por usuario)
 
