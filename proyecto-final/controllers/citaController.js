@@ -4,7 +4,7 @@ const Cita = require('../models/Cita');
 
 const crearCita = async (req, res) => {
     try {
-        console.log(" Body recibido:", req.body); 
+        console.log(" Body recibido:",JSON.stringify(req.body, null, 2)); 
         const nuevaCita = new Cita(req.body);
         await nuevaCita.save();
         res.status(201).json(nuevaCita);
