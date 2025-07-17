@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Cita = require('../models/Cita');
 
 // Crear una nueva cita
