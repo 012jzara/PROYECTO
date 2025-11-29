@@ -1,31 +1,28 @@
 const express = require('express');
 const router = express.Router();
-const citaController = require('../controllers/citaController');
-const { crearCita,
-    obtenerCitas,
-    eliminarCita,
-    actualizarCita,
-    historialpacienteCita,
-    actualizarEstadoCita,
-    obtenerHistorialGeneral,
-    obtenerCitasPorMes,
-  obtenerCitasPorMesFlexible,
-    obtenerCitasPorRangoFechas,
-  verificarConflictoCita,
-      obtenerCitaPorId} = citaController;
 
+const { 
+  crearCita,
+  obtenerCitas,
+  eliminarCita,
+  actualizarCita,
+  historialpacienteCita,
+  actualizarEstadoCita,
+  obtenerHistorialGeneral,
+  obtenerCitasPorMes,
+  obtenerCitasPorRangoFechas,
+  verificarConflictoCita
+} = require('../controllers/citaController');
 
 router.post('/', crearCita);
 router.get('/', obtenerCitas);
+router.get('historial' , obtenerHistorialGeneral);
+router.get('/historial-pacientr/:nombre' ,  historialpacienteCita);
+router.get('/cita-por-mes' , obtenerCitasPorMes);
+router.get('/rango-fechas' , obtenerCitasPorRangoFechas);
+router.get('/conflicto' , verificarConflictoCita);
+router.put('/estado/:id' , actualizarEstadoCita);
+router.put('/:id' , actualizarCita);
 router.delete('/:id', eliminarCita);
-router.put('/:id', actualizarCita);
-router.put('/estado/:id', actualizarEstadoCita);
-router.get('/historial', citaController.obtenerHistorialGeneral);
-router.get('/historial-paciente/:nombre', historialpacienteCita);
-router.get('/citas-por-mes', citaController.obtenerCitasPorMes);
-router.get('/rango-fechas', citaController.obtenerCitasPorRangoFechas);
-router.get('/conflicto', verificarConflictoCita);
-router.get('/citas-por-mes-flexible', obtenerCitasPorMesFlexible); // con agrupaciones dinámicas
-router.get('/:id', obtenerCitaPorId);
 
 module.exports = router;
