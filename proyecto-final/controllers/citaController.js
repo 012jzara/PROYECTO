@@ -1,76 +1,23 @@
-const mongoose = require('mongoose');
 const Cita = require('../models/Cita');
+const mongoose = require ('mongoose');
 
-// Crear una nueva cita
+// Crear cita
 const crearCita = async (req, res) => {
-  try {
-    const data = req.body;
-
-    // Verifica en consola que sí llegan los campos
-    console.log("📥 Body recibido:", data);
-
-    const nuevaCita = new Cita({
-      EsClienteExistente: data.esClienteExistente,
-      NombrePropietario: data.nombrePropietario,
-      Contacto1: data.contacto1,
-      Contacto2: data.contacto2,
-
-      NombrePaciente: data.nombrePaciente,
-      Especie: data.especie,
-      Raza: data.raza,
-      Sexo: data.sexo,
-      Caracter: data.caracter,
-      PatologiasPrevias: data.patologiasPrevias,
-
-      Estado: data.estado || 'Programado',
-      Especialista: data.especialista,
-      TipoEvento: data.tipoEvento,
-      FechaInicio: data.fechaInicio,
-      FechaFin: data.fechaFin,
-      Observaciones: data.observaciones,
-
-      ClienteId: data.clienteId || null,
-      UsuarioResponsable: data.usuarioResponsable,
-      HistorialCambios: data.historialCambios || []
-    });
-
-    await nuevaCita.save();
-    res.status(201).json(nuevaCita.toObject());
-  } catch (error) {
-    console.error("❌ Error al guardar cita:", error.message);
-    res.status(400).json({ error: error.message });
-  }
-};
-
-
-// ✅ Obtener cita por ID con validación
-const obtenerCitaPorId = async (req, res) => {
-  const { id } = req.params;
-
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    return res.status(400).json({ error: 'ID inválido' });
-  }
-
-  try {
-    const cita = await Cita.findById(id);
-    if (!cita) {
-      return res.status(404).json({ error: 'Cita no encontrada' });
+    try {
+        const nuevaCita = new Cita(req.body);
+        await nuevaCita.save();
+        res.status(201).json(nuevaCita);
+    } catch (error) {
+        console.error("❌ Error al guardar cita:", error.message);
+        res.status(400).json({ error: error.message });
     }
-
-    res.json(cita.toObject());
-  } catch (error) {
-    console.error("Error al obtener cita por ID:", error.message);
-    res.status(500).json({ error: 'Error interno al obtener la cita' });
-  }
 };
 
-// Obtener todas las citas (o filtradas por usuario)
-
+// Obtener  citas
 const obtenerCitas = async (req, res) => {
     try {
         const { usuario } = req.query;
-        const filtro = usuario ? { RegistradoPor: usuario } : {};
-
+        const filtro = usuario ? { UsuarioResponsable: usuario } : {};
         const citas = await Cita.find(filtro).sort({ FechaInicio: 1 });
         res.json(citas);
     } catch (error) {
@@ -79,8 +26,7 @@ const obtenerCitas = async (req, res) => {
     }
 };
 
-// Eliminar una cita por ID
-
+// Eliminar una cita
 const eliminarCita = async (req, res) => {
     try {
         await Cita.findByIdAndDelete(req.params.id);
@@ -90,48 +36,62 @@ const eliminarCita = async (req, res) => {
     }
 };
 
-// Actualizar una cita por ID
-
+// Actualizar una cita + historial 
 const actualizarCita = async (req, res)=> {
  try {
-        const citaExistente = await Cita.findById(req.params.id);
-        if (!citaExistente) {
-            return res.status(404).json({ mensaje: 'Cita no encontrada' });
-        }
+         const camposPermitidos = [
+            "EsClienteExistente",
+            "UsuarioResponsable",
+            "NombrePropietario",
+            "Contacto1",
+            "Contacto2",
+            "NombrePaciente",
+            "Especie",
+            "Raza",
+            "Sexo",
+            "Caracter",
+            "PatologiasPrevias",
+            "Estado",
+            "Especialista",
+            "TipoEvento",
+            "FechaInicio",
+            "FechaFin",
+            "Observaciones",
+            "ClienteId"
+        ];
 
-        const nuevaData = req.body;
+       const updateData = {};
+        for (const campo of camposPermitidos) {
+            if (req.body[campo] !== undefined) {
+                updateData[campo] = req.body[campo];
+            }
+          }
 
-        // Agregar registro al historial si hay cambio de estado
-        if (nuevaData.Estado && nuevaData.Estado !== citaExistente.Estado) {
-            const nuevoHistorial = {
-                Fecha: new Date(),
-                EstadoAnterior: citaExistente.Estado,
-                EstadoNuevo: nuevaData.Estado,
-                Motivo: nuevaData.Observaciones || 'Actualización manual',
-                UsuarioResponsable: 'Admin' // Puedes reemplazar esto con info de autenticación
-            };
+          // Se delega totalmente al middleware el registro del historial
+        const citaActualizada = await Cita.findOneAndUpdate(
+            { _id: req.params.id },
+            { $set: updateData },
+            { new: true, runValidators: true }
+        );
 
-            citaExistente.HistorialCambios.push(nuevoHistorial);
-        }
+        if (!citaActualizada)
+            return res.status(404).json({ mensaje: "Cita no encontrada" });
 
-        // Actualiza campos
-        Object.assign(citaExistente, nuevaData);
-        await citaExistente.save();
-
-        res.json({ mensaje: 'Cita actualizada', cita: citaExistente });
+        res.json({ mensaje: "Cita actualizada correctamente", cita: citaActualizada });
 
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ mensaje: 'Error al actualizar cita', error });
+        console.error("❌ Error al actualizar cita:", error);
+        res.status(500).json({ error: "Error al actualizar cita", detalles: error.message });
     }
+
 };
 
 // Obtener historial global
 
 const obtenerHistorialGeneral = async (req, res) => {
     try {
-        const citas = await Cita.find({}, { HistorialCambios: 1, _id: 0 });
-        const historial = citas.flatMap(c => c.HistorialCambios);
+        const citas = await Cita.find({}, { HistorialCambios: 1, _id: 0 }) .lean();
+        const historial = citas.flatMap(c => c.HistorialCambios || []);
         res.json(historial);
     } catch (error) {
         res.status(502).json({ error: 'Error al obtener historial de citas' });
@@ -141,44 +101,50 @@ const obtenerHistorialGeneral = async (req, res) => {
 //obtener historial-paciente 
 
 const historialpacienteCita = async (req, res)=>{
-      const nombre = req.params.nombre;
     try {
         const citas = await Cita.find({
-            NombrePaciente: { $regex: nombre, $options: 'i' }
+            NombrePaciente: { $regex: req.params.nombre, $options: 'i'}
         }).sort({ FechaInicio: -1 });
 
         res.json(citas);
     } catch (error) {
+      console.error('Error historial paciente:', error);
         res.status(500).json({ error: 'Error al obtener historial clínico' });
     }
 }
 
-//Actualizar estado de cita + agregar historial
+//Actualizar estado + historial
 
 const actualizarEstadoCita = async (req, res) => {
-    const {id} = req.params;
-    const {nuevoEstado, motivo, nuevaFecha, usuario} = req.body;
 
     try {
-        const cita = await Cita.findById(id);
-        if (!cita) return res.status(404).json({mensaje: 'Cita no encontrada'});
+        const { id } = req.params;
+        const { nuevoEstado, motivo, nuevaFecha, usuario } = req.body;
 
-        const historial = {
-            EstadoAnterior: cita.Estado,
-            EstadoNuevo: nuevoEstado,
-            Motivo: motivo || 'cambio de estado',
-            UsuarioResponsable: usuario || 'Desconocido'
+        const update = {
+            Estado: nuevoEstado,
+            Motivo: motivo,
+            UsuarioResponsable: usuario
         };
 
-        cita.Estado = nuevoEstado;
-       if (nuevoEstado === 'Pospuesto' && nuevaFecha)
-        {
-            cita.FechaInicio = new Date(nuevaFecha);
-            cita.FechaFin = new Date(nuevaFecha);
+        if (nuevoEstado === "Reprogramado" && nuevaFecha) {
+            const inicio = new Date(nuevaFecha);
+
+            update.FechaInicio = inicio;
+
+            // Recalcular duración correctamente
+            const citaOriginal = await Cita.findById(id);
+            if (!citaOriginal) return res.status(404).json({ mensaje: "Cita no encontrada" });
+
+            const duracion = citaOriginal.FechaFin - citaOriginal.FechaInicio;
+            update.FechaFin = new Date(inicio.getTime() + duracion);
         }
 
-        cita.historialCambios.push(historial);
-        await cita.save();
+        const citaActualizada = await Cita.findOneAndUpdate(
+            { _id: id },
+            { $set: update },
+            { new: true, runValidators: true }
+        );
 
         res.json({mensaje: 'Cita actualizada correctamente', cita});
     } catch (error){
@@ -194,13 +160,14 @@ const obtenerCitasPorMes = async (req, res) => {
 
     const matchStage = {};
 
-    // Si el año fue proporcionado, filtrar por ese año
     if (año) {
-      const anio = parseInt(año);
-      const inicio = new Date(anio, 0, 1);  // 1 de enero, 00:00
-      const fin = new Date(anio, 11, 31, 23, 59, 59, 999); // 31 de diciembre, 23:59:59.999
-
-      matchStage.FechaInicio = { $gte: inicio, $lte: fin };
+      const anio = Number(año);
+      if (!isNaN(anio)) {
+      matchStage.FechaInicio = {
+        $gte: new Date(anio, 0, 1),
+        $lte: new Date(anio, 11, 31, 23, 59, 59 )
+      };
+    }
     }
 
     const resultado = await Cita.aggregate([
@@ -214,92 +181,22 @@ const obtenerCitasPorMes = async (req, res) => {
       {
         $project: {
           mesNumero: "$_id",
-          mes: {
-            $arrayElemAt: [
-              [
-                "", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-                "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
-              ],
-              "$_id"
-            ]
-          },
           cantidad: 1,
           _id: 0
         }
       },
-      { $sort: { mesNumero: 1 } }
+      {$sort: {mesNumero: 1 }}
     ]);
-
     res.json(resultado);
+
   } catch (error) {
     console.error("Error al obtener citas por mes:", error);
     res.status(500).json({ error: "Error interno al obtener citas por mes" });
   }
 };
 
-// obtener citas oir nes flexible
 
-const obtenerCitasPorMesFlexible = async (req, res) => {
-  try {
-    const { año, agrupacion } = req.query;
-    const matchStage = {};
-
-    // Filtrar por año si se proporciona
-    if (año) {
-      const anio = parseInt(año);
-      const inicio = new Date(anio, 0, 1);
-      const fin = new Date(anio, 11, 31, 23, 59, 59, 999);
-      matchStage.FechaInicio = { $gte: inicio, $lte: fin };
-    }
-
-    // Construir agrupación dinámica
-    let groupId = {
-      mes: { $month: "$FechaInicio" }
-    };
-
-    if (agrupacion === "especialista") {
-      groupId.especialista = "$Especialista";
-    } else if (agrupacion === "tipoEvento") {
-      groupId.tipoEvento = "$TipoEvento";
-    }
-
-    const resultado = await Cita.aggregate([
-      { $match: matchStage },
-      {
-        $group: {
-          _id: groupId,
-          cantidad: { $sum: 1 }
-        }
-      },
-      {
-        $project: {
-          mesNumero: "$_id.mes",
-          mes: {
-            $arrayElemAt: [
-              [
-                "", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-                "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
-              ],
-              "$_id.mes"
-            ]
-          },
-          especialista: "$_id.especialista",
-          tipoEvento: "$_id.tipoEvento",
-          cantidad: 1,
-          _id: 0
-        }
-      },
-      { $sort: { mesNumero: 1, especialista: 1, tipoEvento: 1 } }
-    ]);
-
-    res.json(resultado);
-  } catch (error) {
-    console.error("Error al obtener citas agrupadas:", error);
-    res.status(500).json({ error: "Error interno al generar el reporte" });
-  }
-};
-
-// obptener citas por rango de fechas
+// citas por rango 
 
 const obtenerCitasPorRangoFechas = async (req, res) => {
   try {
@@ -319,7 +216,7 @@ const obtenerCitasPorRangoFechas = async (req, res) => {
     };
 
     if (usuario) {
-      filtro.RegistradoPor = usuario;
+      filtro.UsuarioResponsable = usuario;
     }
 
     if (especialista) {
@@ -331,56 +228,46 @@ const obtenerCitasPorRangoFechas = async (req, res) => {
   } catch (error) {
     console.error('Error al filtrar citas por rango:', error);
     res.status(500).json({ error: 'Error al filtrar citas por rango de fechas' });
-  }
-};
+    }
+  };
 
 // verificacion de conflicto cita
 
 const verificarConflictoCita = async (req, res) => {
-  const { especialista, inicio, fin, tipoEvento, sede, idCita} = req.query;
+      try {
+        const { especialista, inicio, fin, tipoEvento, sede, idCita } = req.query;
 
-  if (!especialista || !inicio || !fin) {
-    return res.status(400).json({ error: 'Parámetros requeridos: especialista, inicio, fin' });
-  }
+        if (!especialista || !inicio || !fin)
+            return res.status(400).json({ error: 'Faltan parámetros requeridos' });
 
-  try {
-    const fechaInicio = new Date(inicio);
-    const fechaFin = new Date(fin);
+        const fechaInicio = new Date(inicio);
+        const fechaFin = new Date(fin);
 
-    // Filtro base obligatorio
-    const filtro = {
-      Especialista: especialista,
-      $or: [
-        { FechaInicio: { $lt: fechaFin }, FechaFin: { $gt: fechaInicio } }
-      ]
-    };
+        const filtro = {
+            Especialista: especialista,
+            $or: [{ FechaInicio: { $lt: fechaFin }, FechaFin: { $gt: fechaInicio } }]
+        };
 
-    // Filtros adicionales opcionales
-    if (tipoEvento) {
-      filtro.TipoEvento = tipoEvento;
+        if (tipoEvento) filtro.TipoEvento = tipoEvento;
+        if (sede) filtro.Sede = sede;
+
+        if (idCita && mongoose.Types.ObjectId.isValid(idCita)) {
+            filtro._id = { $ne: idCita };
+        }
+
+        const conflictos = await Cita.find(filtro);
+
+        res.json({
+            conflicto: conflictos.length > 0,
+            cantidad: conflictos.length,
+            citas: conflictos
+        });
+
+    } catch (error) {
+        console.error('Error al verificar conflictos:', error);
+        res.status(500).json({ error: 'Error al verificar conflicto de horarios' });
     }
-
-    if (sede) {
-      filtro.Sede = sede;
-    }
-    // Excluir una cita específica si se pasa el ID (edición de cita)
-    if (idCita) {
-      filtro._id = { $ne: idCita };
-    }
-
-      const conflictos = await Cita.find(filtro);
-
-    res.json({
-      conflicto: conflictos.length > 0,
-      cantidad: conflictos.length,
-      citas: conflictos
-    });
-  } catch (error) {
-    console.error('Error al verificar conflictos:', error);
-    res.status(500).json({ error: 'Error al verificar conflicto de horarios' });
-  }
 };
-
 
 module.exports = {
   crearCita,
@@ -391,8 +278,6 @@ module.exports = {
   actualizarEstadoCita,
   obtenerHistorialGeneral,
   obtenerCitasPorMes,
-  obtenerCitasPorMesFlexible,
   obtenerCitasPorRangoFechas,
-  verificarConflictoCita,
-  obtenerCitaPorId
+  verificarConflictoCita
 };
