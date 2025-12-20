@@ -16,4 +16,6 @@ router.get('/',authenticate,permitirRoles(ROLES_READ),auditar('CITA_LISTAR'),cit
 router.get('/:id',authenticate,permitirRoles(ROLES_READ),auditar('CITA_OBTENER_POR_ID'),cita.obtenerCitaPorId);
 router.put('/:id',authenticate,permitirRoles(ROLES_WRITE),auditar('CITA_ACTUALIZAR'),cita.actualizarCita);
 router.patch('/:id/estado',authenticate,permitirRoles(ROLES_WRITE),auditar('CITA_ACTUALIZAR_ESTADO'),cita.actualizarEstadoCita);
+
 router.delete('/:id',authenticate,permitirRoles(['Admin']),auditar('CITA_ELIMINAR'),cita.eliminarCita);
+module.exports = router;
