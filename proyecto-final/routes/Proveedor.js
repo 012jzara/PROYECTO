@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const proveedor= require('../controllers/proveedorController');
+const proveedor= require('../controllers/provedorController');
 const { authenticate, permitirRoles, auditar } = require('../middleware/authMiddleware');
 
 const ROLES_ADMIN_INV = ['Admin', 'Inventario'];
@@ -15,3 +15,4 @@ router.put('/:id/desactivar',authenticate,permitirRoles(['Admin']),auditar('PROV
 router.delete('/:id',authenticate,permitirRoles(['Admin']),auditar('PROVEEDOR_ELIMINAR'),proveedor.eliminarProveedor);
 
 module.exports = router;
+
