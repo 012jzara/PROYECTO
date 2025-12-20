@@ -6,7 +6,7 @@ const { authenticate, permitirRoles, auditar } = require('../middleware/authMidd
 const ROLES = { ADMIN: 'Admin'};
 
 router.post('/register', authenticate, permitirRoles([ROLES.ADMIN]), auditar(['USUARIO_CREAR']), usuario.registrarUsuario);
-router.get('/', auth, authenticate, permitirRoles([ROLES.ADMIN]),auditar(['USUARIO_LISTAR']), usuario.obtenerUsuarios);
+router.get('/', authenticate, permitirRoles([ROLES.ADMIN]),auditar(['USUARIO_LISTAR']), usuario.obtenerUsuarios);
 router.get('/me', authenticate,permitirRoles([ROLES.ADMIN]), auditar('USUARIO_ME'),usuario.obtenerPerfil);
 router.get('/:id',authenticate,permitirRoles([ROLES.ADMIN]),auditar('USUARIO_OBTENER_POR_ID'),usuario.obtenerUsuarioPorId);
 router.put('/:id',authenticate,permitirRoles([ROLES.ADMIN]),auditar('USUARIO_ACTUALIZAR'),usuario.actualizarUsuario);
@@ -16,3 +16,4 @@ router.put('/:id/desactivar',  authenticate, permitirRoles([ROLES.ADMIN]), audit
 router.put('/:id/password',  authenticate, auditar(['USUARIO_CAMBIAR_PASSWORD']), usuario.cambiarPassword);
 
 module.exports = router;
+
