@@ -77,3 +77,4 @@ conectarMongo()
     console.error('❌ Error al conectar a MongoDB:', err);
     process.exit(1);
   });
+
