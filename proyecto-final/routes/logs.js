@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const log = require('../controllers/LogController');
-const { authenticate, permitirRoles} = require('../middlewares/authMiddleware');
+const { authenticate, permitirRoles} = require('../middleware/authMiddleware');
 
 router.post('/', authenticate, log.registrarLog);
 router.get('/', authenticate, permitirRoles(['Admin']), log.obtenerLogs);

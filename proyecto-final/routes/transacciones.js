@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const transaccion = require('../controllers/transaccionController');
-const { authenticate, permitirRoles, auditar } = require('../middlewares/authMiddleware');
+const { authenticate, permitirRoles, auditar } = require('../middleware/authMiddleware');
 
 const ROLES = ['Admin', 'Caja'];
 

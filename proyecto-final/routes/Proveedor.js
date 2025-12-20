@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const proveedor= require('../controllers/proveedorController');
-const { authenticate, permitirRoles, auditar } = require('../middlewares/authMiddleware');
+const { authenticate, permitirRoles, auditar } = require('../middleware/authMiddleware');
 
 const ROLES_ADMIN_INV = ['Admin', 'Inventario'];
 

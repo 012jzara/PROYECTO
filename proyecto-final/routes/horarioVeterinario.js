@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const horario = require('../controllers/horarioVeterinarioController');
-const { authenticate, permitirRoles, auditar } = require('../middlewares/authMiddleware');
+const { authenticate, permitirRoles, auditar } = require('../middleware/authMiddleware');
 
 router.post('/', authenticate,permitirRoles(['Admin', 'Veterinario']),auditar('HORARIO_CREAR'), horario.crearHorario);
 router.get('/', authenticate,permitirRoles(['Admin', 'Veterinario', 'Asistente']),auditar('HORARIO_LISTAR'),horario.obtenerHorarios);

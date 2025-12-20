@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const notifica = require('../controllers/notificacionController');
-const { authenticate, permitirRoles } = require('../middlewares/authMiddleware');
+const { authenticate, permitirRoles } = require('../middleware/authMiddleware');
 
 router.post('/',authenticate,permitirRoles(['Admin']),notifica.crearNotificacion);
 router.get('/',authenticate,permitirRoles(['Admin']),notifica.obtenerNotificaciones);

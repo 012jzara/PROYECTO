@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const cita = require('../controllers/citaController');
-const { authenticate, permitirRoles, auditar } = require('../middlewares/authMiddleware');
+const { authenticate, permitirRoles, auditar } = require('../middleware/authMiddleware');
 
 const ROLES_WRITE = ['Admin', 'Veterinario', 'Asistente', 'Caja'];
 const ROLES_READ  = ['Admin', 'Veterinario', 'Asistente', 'Caja'];

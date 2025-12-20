@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const historialCita = require('../controllers/HistorialCitaController');
-const { authenticate, permitirRoles, auditar } = require('../middlewares/authMiddleware');
+const { authenticate, permitirRoles, auditar } = require('../middleware/authMiddleware');
 
 router.post('/',authenticate, permitirRoles(['Admin', 'Veterinario' ]), auditar('HISTORIALCITA_CREAR'), historialCita.crearHistorial);
 router.get('/',authenticate, permitirRoles(['Admin', 'Veterinario']), auditar('HISTORIALCITA_LISTAR'),  historialCita.obtenerHistorial);

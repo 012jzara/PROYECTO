@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const servicio = require('../controllers/servicioController');
-const { authenticate, permitirRoles, auditar } = require('../middlewares/authMiddleware');
+const { authenticate, permitirRoles, auditar } = require('../middleware/authMiddleware');
 
 router.post('/',authenticate,permitirRoles(['Admin']),auditar('CREAR_SERVICIO'),servicio.crearServicio);
 router.get('/',authenticate,permitirRoles(['Admin', 'Veterinario', 'Caja', 'Inventario', 'Asistente']),auditar('LISTAR_SERVICIO'),servicio.obtenerServicios);

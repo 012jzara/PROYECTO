@@ -59,24 +59,32 @@ app.use('/api/pagos',             pagos);
 app.use('/api/config',            config);
 app.use('/api/logs',              logs);
 app.use('/api/notificaciones',    notificaciones);
-conectarMongo(); 
 
-app.get('/', (req, res) => {
-    res.send('API funcionando correctamente desde Node.js');
-});
-app.use((req, res, next) => {
-  res.status(404).json({ msg: 'Ruta no encontrada' });
-});
-app.use((err, req, res, next) => {
-  console.error('Error no manejado:', err);
-  res.status(500).json({ msg: 'Error interno del servidor' });
-});
+//conectarMongo(); 
+
+//app.get('/', (req, res) => {
+  //  res.send('API funcionando correctamente desde Node.js');
+//});
+//app.use((req, res, next) => {
+  //res.status(404).json({ msg: 'Ruta no encontrada' });
+//});
+//app.use((err, req, res, next) => {
+  //console.error('Error no manejado:', err);
+  //res.status(500).json({ msg: 'Error interno del servidor' });
+//});
+
+
+const mongoose = require('mongoose');
+const { seedAdminIfMissing } = require('./seed/seedAdmin');
 
 const PORT = process.env.PORT || 3000;
 
 conectarMongo()
-  .then(() => {
-    console.log(' Conectado a MongoDB');
+  .then(async () => {
+    console.log('✅ Conectado a MongoDB');
+
+    await seedAdminIfMissing();
+
     app.listen(PORT, '0.0.0.0', () => {
       console.log(`🚀 Servidor corriendo en http://0.0.0.0:${PORT}`);
     });
@@ -85,13 +93,3 @@ conectarMongo()
     console.error('❌ Error al conectar a MongoDB:', err);
     process.exit(1);
   });
-
-const { seedAdminIfMissing } = require('./seed/seedAdmin');
-
-mongoose.connection.once('open', async () => {
-  try {
-    await seedAdminIfMissing();
-  } catch (e) {
-    console.error('❌ Error seed admin:', e.message);
-  }
-});

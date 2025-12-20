@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const mascota = require('../controllers/mascotaController');
-const { authenticate, permitirRoles, auditar } = require('../middlewares/authMiddleware');
+const { authenticate, permitirRoles, auditar } = require('../middleware/authMiddleware');
 
 const ROLES = ['Admin', 'Veterinario', 'Caja', 'Asistente'];
 

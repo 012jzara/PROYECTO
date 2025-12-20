@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const config = require('../controllers/configuracionController');
-const { authenticate, permitirRoles, auditar } = require('../middlewares/authMiddleware');
+const { authenticate, permitirRoles, auditar } = require('../middleware/authMiddleware');
 
 router.post('/', authenticate, permitirRoles (['Admin']),auditar('CONFIG_CREAR'), config.crearConfig);
 router.get('/', authenticate, permitirRoles(['Admin']), auditar('CONFIG_LISTAR'),config.obtenerConfigs);
