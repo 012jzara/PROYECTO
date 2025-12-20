@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const { seedAdminIfMissing } = require('./seed/seedAdmin');
+const { seedAdminIfMissing } = require('../seed/seedAdmin');
 
 const PORT = process.env.PORT || 3000;
 
@@ -17,3 +17,4 @@ conectarMongo()
     console.error('❌ Error al conectar a MongoDB:', err);
     process.exit(1);
   });
+
