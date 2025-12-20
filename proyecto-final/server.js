@@ -1,8 +1,37 @@
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
+
 const conectarMongo = require('./utils/conectarMongo');
 const { seedAdminIfMissing } = require('./seed/seedAdmin');
+const auth         = require('./routes/auth');  
+const usuario     = require('./routes/usuario');  
+
+const citas        = require('./routes/citas');
+const clientes     = require('./routes/clientes');
+const mascotas     = require('./routes/mascota');
+const historiaCli  = require('./routes/historiaclinica');
+const historialCita= require('./routes/historialCita');
+const horarios     = require('./routes/horarioVeterinario');
+
+const productos    = require('./routes/productoInsumo');
+const movimientos  = require('./routes/movimientoInventario');
+const compras      = require('./routes/compra');
+const ventas       = require('./routes/ventas');
+
+const proveedores  = require('./routes/Proveedor');
+
+const reportesInv  = require('./routes/reporteInventario');
+
+const servicios    = require('./routes/servicios');
+
+const transacciones= require('./routes/transacciones');
+const pagos        = require('./routes/pagos');
+
+const config       = require('./routes/configuracion');
+const logs         = require('./routes/logs');
+const notificaciones = require('./routes/notificaciones');
+
 const check = (name, mod) => {
   console.log(`[ROUTE] ${name}:`, typeof mod);
   if (typeof mod !== 'function') {
@@ -31,37 +60,9 @@ check('pagos', pagos);
 check('config', config);
 check('logs', logs);
 check('notificaciones', notificaciones);
-
 const app = express();
-
 app.use(cors());
 app.use(express.json());
-
-const auth         = require('./routes/auth');  
-const usuario     = require('./routes/usuario');  
-
-const citas        = require('./routes/citas');
-const clientes     = require('./routes/clientes');
-const mascotas     = require('./routes/mascota');
-const historiaCli  = require('./routes/historiaclinica');
-const historialCita= require('./routes/historialCita');
-const horarios     = require('./routes/horarioVeterinario');
-
-const productos    = require('./routes/productoInsumo');
-const movimientos  = require('./routes/movimientoInventario');
-const compras      = require('./routes/compra');
-const ventas       = require('./routes/ventas');
-const proveedores  = require('./routes/Proveedor');
-const reportesInv  = require('./routes/reporteInventario');
-
-const servicios    = require('./routes/servicios');
-
-const transacciones= require('./routes/transacciones');
-const pagos        = require('./routes/pagos');
-
-const config       = require('./routes/configuracion');
-const logs         = require('./routes/logs');
-const notificaciones = require('./routes/notificaciones');
 
 app.use('/api/auth',      auth);
 app.use('/api/usuarios',  usuario);
@@ -88,6 +89,15 @@ app.use('/api/pagos',             pagos);
 app.use('/api/config',            config);
 app.use('/api/logs',              logs);
 app.use('/api/notificaciones',    notificaciones);
+// Healthcheck
+app.get('/', (req, res) => res.send('API funcionando correctamente desde Node.js'));
+
+// 404 + error handler
+app.use((req, res) => res.status(404).json({ msg: 'Ruta no encontrada' }));
+app.use((err, req, res, next) => {
+  console.error('Error no manejado:', err);
+  res.status(500).json({ msg: 'Error interno del servidor' });
+});
 
 const PORT = process.env.PORT || 3000;
 
@@ -105,5 +115,6 @@ conectarMongo()
     console.error('❌ Error al conectar a MongoDB:', err);
     process.exit(1);
   });
+
 
 
