@@ -62,4 +62,90 @@ exports.buscarProducto = async (req, res) => {
   } catch (error) {
     res.status(500).json({ mensaje: 'Error al buscar productos', error });
   }
+
+};
+exports.obtenerProductoPorId = async (req, res) => {
+  try {
+    const producto = await Producto.findById(req.params.id);
+    if (!producto) return res.status(404).json({ mensaje: 'Producto no encontrado' });
+    res.json(producto);
+  } catch (error) {
+    res.status(400).json({ mensaje: 'ID inválido', error: error.message });
+  }
+};
+
+exports.filtrarPorCategoria = async (req, res) => {
+  try {
+    const { categoria } = req.params;
+    const productos = await Producto.find({ Categoria: categoria }).sort({ Nombre: 1 });
+    res.json(productos);
+  } catch (error) {
+    res.status(500).json({ mensaje: 'Error al filtrar por categoría', error: error.message });
+  }
+};
+
+exports.filtrarPorTienda = async (req, res) => {
+  try {
+    const { tienda } = req.params;
+    const productos = await Producto.find({ Tienda: tienda }).sort({ Nombre: 1 });
+    res.json(productos);
+  } catch (error) {
+    res.status(500).json({ mensaje: 'Error al filtrar por tienda', error: error.message });
+  }
+};
+
+exports.obtenerStockCritico = async (req, res) => {
+  try {
+    const umbral = Number(req.query.umbral ?? 5);
+
+    // Intenta cubrir ambos nombres de campo comunes (Stock / Cantidad)
+    const productos = await Producto.find({
+      $or: [
+        { Stock: { $lte: umbral } },
+        { Cantidad: { $lte: umbral } }
+      ]
+    }).sort({ Nombre: 1 });
+
+    res.json(productos);
+  } catch (error) {
+    res.status(500).json({ mensaje: 'Error al obtener stock crítico', error: error.message });
+  }
+};
+
+exports.movimientoProducto = async (req, res) => {
+  try {
+    const { tipo, cantidad } = req.body; // tipo: "entrada" | "salida"
+    const cant = Number(cantidad);
+
+    if (!['entrada', 'salida'].includes(tipo)) {
+      return res.status(400).json({ mensaje: 'Tipo inválido (usa "entrada" o "salida")' });
+    }
+    if (!cant || cant <= 0) {
+      return res.status(400).json({ mensaje: 'Cantidad inválida' });
+    }
+
+    const prod = await Producto.findById(req.params.id);
+    if (!prod) return res.status(404).json({ mensaje: 'Producto no encontrado' });
+
+    // Detecta campo de stock
+    const campoStock = (prod.Stock !== undefined) ? 'Stock'
+                     : (prod.Cantidad !== undefined) ? 'Cantidad'
+                     : null;
+
+    if (!campoStock) {
+      return res.status(400).json({ mensaje: 'Tu modelo no tiene campo Stock ni Cantidad' });
+    }
+
+    const actual = Number(prod[campoStock] ?? 0);
+    const nuevo = tipo === 'entrada' ? actual + cant : actual - cant;
+
+    if (nuevo < 0) return res.status(400).json({ mensaje: 'Stock insuficiente' });
+
+    prod[campoStock] = nuevo;
+    await prod.save();
+
+    res.json({ mensaje: 'Movimiento aplicado', producto: prod });
+  } catch (error) {
+    res.status(500).json({ mensaje: 'Error al registrar movimiento', error: error.message });
+  }
 };
