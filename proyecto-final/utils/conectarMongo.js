@@ -1,16 +1,19 @@
 const mongoose = require('mongoose');
-require('dotenv').config();
+const { seedAdminIfMissing } = require('./seed/seedAdmin');
 
-const conectarMongo = async () => {
-  try {
-    await mongoose.connect(process.env.MONGO_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
+const PORT = process.env.PORT || 3000;
+
+conectarMongo()
+  .then(async () => {
+    console.log('✅ Conectado a MongoDB');
+
+    await seedAdminIfMissing();
+
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`🚀 Servidor corriendo en http://0.0.0.0:${PORT}`);
     });
-    console.log('✅ Conectado a MongoDB por ngrok');
-  } catch (error) {
-    console.error('❌ Error al conectar con MongoDB:', error.message);
-  }
-};
-
-module.exports = conectarMongo;
+  })
+  .catch((err) => {
+    console.error('❌ Error al conectar a MongoDB:', err);
+    process.exit(1);
+  });
