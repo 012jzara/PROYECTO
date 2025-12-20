@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const producto = require('../controllers/productoInsumoController');;
+const producto = require('../controllers/productoController');;
 const { authenticate, permitirRoles, auditar } = require('../middleware/authMiddleware');
 
 const ROLES_INV = ['Admin', 'Inventario'];
@@ -17,3 +17,4 @@ router.get('/filtro/tienda/:tienda', producto.filtrarPorTienda);
 router.get('/stock/critico', producto.obtenerStockCritico);
 
 module.exports = router;
+
