@@ -3,6 +3,34 @@ const cors = require('cors');
 require('dotenv').config();
 const conectarMongo = require('./utils/conectarMongo');
 const { seedAdminIfMissing } = require('./seed/seedAdmin');
+const check = (name, mod) => {
+  console.log(`[ROUTE] ${name}:`, typeof mod);
+  if (typeof mod !== 'function') {
+    console.log('   Valor real:', mod);
+    throw new Error(`Ruta "${name}" NO es Router (no es function).`);
+  }
+};
+
+check('auth', auth);
+check('usuario', usuario);
+check('citas', citas);
+check('clientes', clientes);
+check('mascotas', mascotas);
+check('historiaCli', historiaCli);
+check('historialCita', historialCita);
+check('horarios', horarios);
+check('productos', productos);
+check('movimientos', movimientos);
+check('compras', compras);
+check('ventas', ventas);
+check('proveedores', proveedores);
+check('reportesInv', reportesInv);
+check('servicios', servicios);
+check('transacciones', transacciones);
+check('pagos', pagos);
+check('config', config);
+check('logs', logs);
+check('notificaciones', notificaciones);
 
 const app = express();
 
@@ -77,4 +105,5 @@ conectarMongo()
     console.error('❌ Error al conectar a MongoDB:', err);
     process.exit(1);
   });
+
 
