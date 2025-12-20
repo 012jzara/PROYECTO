@@ -1,4 +1,4 @@
-const Servicio = require('../models/Servicio');
+const Servicio = require('../models/Servicios');
 
 exports.crearServicio = async (req, res) => {
   try {
@@ -207,3 +207,4 @@ exports.eliminarServicio = async (req, res) => {
     res.status(500).json({ msg: 'Error al eliminar servicio', error: error.message });
   }
 };
+
