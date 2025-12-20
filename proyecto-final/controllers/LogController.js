@@ -96,10 +96,4 @@ exports.ObtenerLogsPorRangoFechas = async (req, res) => {
     }
 };
 
-module.exports = { 
-    registrarLog, 
-    obtenerLogs,
-    obtenerLogsPorUsuario,
-    obtenerLogsPorAccion,
-    obtenerLogsPorRangoFechas
- };
+
