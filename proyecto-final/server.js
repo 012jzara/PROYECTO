@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 const conectarMongo = require('./utils/conectarMongo');
+const { seedAdminIfMissing } = require('./seed/seedAdmin');
 
 const app = express();
 
@@ -59,23 +60,6 @@ app.use('/api/pagos',             pagos);
 app.use('/api/config',            config);
 app.use('/api/logs',              logs);
 app.use('/api/notificaciones',    notificaciones);
-
-//conectarMongo(); 
-
-//app.get('/', (req, res) => {
-  //  res.send('API funcionando correctamente desde Node.js');
-//});
-//app.use((req, res, next) => {
-  //res.status(404).json({ msg: 'Ruta no encontrada' });
-//});
-//app.use((err, req, res, next) => {
-  //console.error('Error no manejado:', err);
-  //res.status(500).json({ msg: 'Error interno del servidor' });
-//});
-
-
-const mongoose = require('mongoose');
-const { seedAdminIfMissing } = require('./seed/seedAdmin');
 
 const PORT = process.env.PORT || 3000;
 

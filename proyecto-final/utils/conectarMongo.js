@@ -1,20 +1,11 @@
 const mongoose = require('mongoose');
-const { seedAdminIfMissing } = require('../seed/seedAdmin');
 
-const PORT = process.env.PORT || 3000;
+async function conectarMongo() {
+  const uri = process.env.MONGO_URI;
+  if (!uri) throw new Error('❌ MONGO_URI no está definido en Render (Environment)');
 
-conectarMongo()
-  .then(async () => {
-    console.log('✅ Conectado a MongoDB');
+  await mongoose.connect(uri);
+  return mongoose;
+}
 
-    await seedAdminIfMissing();
-
-    app.listen(PORT, '0.0.0.0', () => {
-      console.log(`🚀 Servidor corriendo en http://0.0.0.0:${PORT}`);
-    });
-  })
-  .catch((err) => {
-    console.error('❌ Error al conectar a MongoDB:', err);
-    process.exit(1);
-  });
-
+module.exports = conectarMongo;
