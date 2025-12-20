@@ -1,6 +1,5 @@
 const Propietario = require('../models/Propietario');
 
-// Obtener todos los propietarios
 exports.obtenerPropietarios = async (req, res) => {
   try {
     const lista = await Propietario.find();
@@ -10,7 +9,6 @@ exports.obtenerPropietarios = async (req, res) => {
   }
 };
 
-// Obtener propietario por id
 exports.obtenerPropietario = async (req, res) => {
   try {
     const propietario = await Propietario.findById(req.params.id);
@@ -21,7 +19,6 @@ exports.obtenerPropietario = async (req, res) => {
   }
 };
 
-// Crear nuevo propietario
 exports.crearPropietario = async (req, res) => {
   try {
     const nuevo = new Propietario(req.body);
@@ -32,7 +29,6 @@ exports.crearPropietario = async (req, res) => {
   }
 };
 
-// Actualizar propietario
 exports.actualizarPropietario = async (req, res) => {
   try {
     const actualizado = await Propietario.findByIdAndUpdate(req.params.id, req.body, { new: true });
@@ -43,7 +39,6 @@ exports.actualizarPropietario = async (req, res) => {
   }
 };
 
-// Eliminar propietario
 exports.eliminarPropietario = async (req, res) => {
   try {
     const eliminado = await Propietario.findByIdAndDelete(req.params.id);

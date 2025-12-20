@@ -1,24 +1,147 @@
 const Cita = require('../models/Cita');
+const Notificacion = require('../models/Notificacion');
+const HistorialCita = require('../models/HistorialCita');
+const { obtenerNumero } = require('../services/configService');
 const mongoose = require ('mongoose');
 
-// Crear cita
-const crearCita = async (req, res) => {
+const isValidId = (id) => mongoose.Types.ObjectId.isValid(id);
+
+exports.crearCita = async (req, res) => {
     try {
-        const nuevaCita = new Cita(req.body);
-        await nuevaCita.save();
-        res.status(201).json(nuevaCita);
-    } catch (error) {
-        console.error("❌ Error al guardar cita:", error.message);
-        res.status(400).json({ error: error.message });
+    const {
+      FechaInicio,
+      FechaFin,
+      Sede,
+      TipoEvento,
+      EsClienteExistente,
+      UsuarioResponsable,
+      ClienteId,
+      PacienteId,
+      VeterinarioId,
+      Especialista,
+      NombrePropietario,
+      Contacto1,
+      Contacto2,
+      NombrePaciente,
+      Especie,
+      Raza,
+      Sexo,
+      Caracter,
+      PatologiasPrevias,
+      Observaciones,
+      VentaId
+    } = req.body;
+    if (!FechaInicio) {
+      return res.status(400).json({ msg: 'FechaInicio es obligatoria' });
     }
+    if (!UsuarioResponsable) {
+      return res.status(400).json({ msg: 'UsuarioResponsable es obligatorio' });
+    }
+    const inicio = new Date(FechaInicio);
+    let fin = FechaFin ? new Date(FechaFin) : null;
+
+
+    if (!fin) {
+      const duracionMin = await obtenerNumero(
+        'CITAS.DURACION_DEFAULT_MINUTOS',
+        Sede || null, 30 );
+      fin = new Date(inicio.getTime() + duracionMin * 60 * 1000);
+    }
+      const nuevaCita = new Cita({ 
+      EsClienteExistente,
+      UsuarioResponsable,
+      ClienteId: ClienteId || null,
+      PacienteId: PacienteId || null,
+      VeterinarioId: VeterinarioId || null,
+      Especialista,
+      NombrePropietario,
+      Contacto1,
+      Contacto2,
+      NombrePaciente,
+      Especie,
+      Raza,
+      Sexo,
+      Caracter,
+      PatologiasPrevias,
+      Estado: 'Programado',
+      TipoEvento,
+      Sede,
+      FechaInicio: inicio,
+      FechaFin: fin,
+      Observaciones,
+      VentaId: VentaId || null
+    });
+      await nuevaCita.save();
+
+    const usuarioId = req.user?.id || UsuarioResponsable;
+
+      try {
+        await Notificacion.create({
+          UsuarioId: null,
+          Titulo: 'Nueva cita programada',
+          Mensaje: `Cita para ${nuevaCita.NombrePaciente} con especialista ${nuevaCita.Especialista} el ${nuevaCita.FechaInicio.toLocaleString()}`,
+          Tipo: 'Cita',
+          Nivel: 'info',
+          ReferenciaId: nuevaCita._id,
+          ModeloRelacionado: 'Cita',
+        }); 
+          
+
+      } catch (e) {
+        console.error('No se pudo crear notificación de cita:', e.message);
+      }
+
+      try {
+        await HistorialCita.create({
+        CitaId: nuevaCita._id,
+        EstadoAnterior: null,
+        EstadoNuevo: nuevaCita.Estado,
+        Motivo: 'Creación de cita',
+        UsuarioResponsable: usuarioId
+      });
+
+    } catch (e) {
+     console.error('No se pudo crear historial inicial de cita:', e.message);
+          
+    }
+
+       res.status(201).json(nuevaCita);
+
+    try {
+      const usuarioLogId = req.user?.id || req.user?._id || UsuarioResponsable || null;
+
+      await Log.create({
+        UsuarioId: usuarioLogId,
+        Accion: 'CREAR_CITA',
+        Detalle: `Cita creada para paciente ${
+          nuevaCita.NombrePaciente || nuevaCita.PacienteId
+        } en fecha ${nuevaCita.FechaInicio?.toLocaleString()}`,
+        IP: req.ip,
+        UserAgent: req.headers['user-agent']
+      });
+    } catch (errLog) {
+      console.error('Error registrando log de crear cita:', errLog.message);
+    }
+
+
+  } catch (error) {
+    console.error("❌ Error al guardar cita:", error.message);
+    res.status(400).json({ error: error.message });
+  }
 };
 
-// Obtener  citas
-const obtenerCitas = async (req, res) => {
+exports.obtenerCitas = async (req, res) => {
     try {
-        const { usuario } = req.query;
+        const { usuario, especialista, estado, desde, hasta} = req.query;
         const filtro = usuario ? { UsuarioResponsable: usuario } : {};
-        const citas = await Cita.find(filtro).sort({ FechaInicio: 1 });
+        if (especialista) filtro.Especialista = especialista;
+        if (estado) filtro.Estado = estado;
+        if (desde || hasta) {
+        filtro.FechaInicio = {};
+        if (desde) filtro.FechaInicio.$gte = new Date(desde);
+        if (hasta) filtro.FechaInicio.$lte = new Date(hasta + 'T23:59:59');
+    }
+      const citas = await Cita.find(filtro).sort({ FechaInicio: 1 });
         res.json(citas);
     } catch (error) {
         console.error('Error al obtener citas:', error);
@@ -26,59 +149,114 @@ const obtenerCitas = async (req, res) => {
     }
 };
 
-// Eliminar una cita
-const eliminarCita = async (req, res) => {
+exports.obtenerCitaPorId = async (req, res) => {
     try {
-        await Cita.findByIdAndDelete(req.params.id);
-        res.json({ mensaje: 'Cita eliminada' });
-    } catch (error) {
-        res.status(500).json({ error: 'No se pudo eliminar la cita' });
-    }
+      const { id } = req.params;
+
+      if (!isValidId(id)) {
+        return res.status(400).json({ error: 'ID inválido' });
+      }
+      const cita = await Cita.findById(id)
+        .populate('ClienteId')
+        .populate('PacienteId')
+        .populate('VeterinarioId', 'NombreCompleto Usuario')
+        .populate('Especialista', 'NombreCompleto Usuario');
+
+      if (!cita) return res.status(404).json({ mensaje: "Cita no encontrada" });
+      
+    res.json(cita);
+  } catch (error){
+    console.error(error);
+    res.status(500).json({error: 'Error al obtener la cita'});
+  }
 };
 
-// Actualizar una cita + historial 
-const actualizarCita = async (req, res)=> {
+exports.eliminarCita = async (req, res) => {
+    try {
+    const { id } = req.params;
+
+    if (!isValidId(id)) {
+      return res.status(400).json({ error: 'ID inválido' });
+    }
+    const cita = await Cita.findByIdAndDelete(id);
+    if (!cita) {
+      return res.status(404).json({ mensaje: 'Cita no encontrada' });
+    }
+
+    await HistorialCita.deleteMany({ CitaId: id });
+    res.json({ mensaje: 'Cita eliminada' });
+  } catch (error) {
+    res.status(500).json({ error: 'No se pudo eliminar la cita' });
+  }
+};
+
+exports.actualizarCita = async (req, res)=> {
  try {
-         const camposPermitidos = [
-            "EsClienteExistente",
-            "UsuarioResponsable",
-            "NombrePropietario",
-            "Contacto1",
-            "Contacto2",
-            "NombrePaciente",
-            "Especie",
-            "Raza",
-            "Sexo",
-            "Caracter",
-            "PatologiasPrevias",
-            "Estado",
-            "Especialista",
-            "TipoEvento",
-            "FechaInicio",
-            "FechaFin",
-            "Observaciones",
-            "ClienteId"
+    const { id } = req.params;
+
+    if (!isValidId(id)) {
+      return res.status(400).json({ error: 'ID inválido' });
+    }
+      const camposPermitidos = [
+        "EsClienteExistente",
+        "UsuarioResponsable",
+        "NombrePropietario",
+        "Contacto1",
+        "Contacto2",
+        "NombrePaciente",
+        "Especie",
+        "Raza",
+        "Sexo",
+        "Caracter",
+        "PatologiasPrevias",
+        "Estado",
+        "Especialista",
+        "TipoEvento",
+        "Sede",
+        "FechaInicio",
+        "FechaFin",
+        "Observaciones",
+        "ClienteId",
+        "PacienteId",
+        "VeterinarioId",
+        "ServicioPrincipalId",
+        "ServicioAdicionales"
         ];
 
        const updateData = {};
         for (const campo of camposPermitidos) {
-            if (req.body[campo] !== undefined) {
-                updateData[campo] = req.body[campo];
-            }
-          }
+            if (req.body[campo] !== undefined) updateData[campo] = req.body[campo];}
 
-          // Se delega totalmente al middleware el registro del historial
-        const citaActualizada = await Cita.findOneAndUpdate(
-            { _id: req.params.id },
-            { $set: updateData },
-            { new: true, runValidators: true }
-        );
+          
+        const citaOriginal = await Cita.findById(id);
+    if (!citaOriginal) {
+      return res.status(404).json({ mensaje: "Cita no encontrada" });
+    }
 
-        if (!citaActualizada)
-            return res.status(404).json({ mensaje: "Cita no encontrada" });
+    const citaActualizada = await Cita.findOneAndUpdate(
+      { _id: id },
+      { $set: updateData },
+      { new: true, runValidators: true }
+    );
 
-        res.json({ mensaje: "Cita actualizada correctamente", cita: citaActualizada });
+    res.json({ mensaje: "Cita actualizada correctamente", cita: citaActualizada });
 
+    try {
+      let detalle = `Cita ${citaActualizada._id} editada.`;
+      if (citaOriginal.Estado !== citaActualizada.Estado) {
+        detalle += ` Estado: ${citaOriginal.Estado} → ${citaActualizada.Estado}`;
+      }
+
+      await Log.create({
+        UsuarioId: req.user?.id || req.user?._id,
+        Accion: 'EDITAR_CITA',
+        Detalle: detalle,
+        IP: req.ip,
+        UserAgent: req.headers['user-agent']
+      });
+    } catch (errLog) {
+      console.error('Error registrando log de editar cita:', errLog.message);
+    }
     } catch (error) {
         console.error("❌ Error al actualizar cita:", error);
         res.status(500).json({ error: "Error al actualizar cita", detalles: error.message });
@@ -86,41 +264,26 @@ const actualizarCita = async (req, res)=> {
 
 };
 
-// Obtener historial global
-
-const obtenerHistorialGeneral = async (req, res) => {
-    try {
-        const citas = await Cita.find({}, { HistorialCambios: 1, _id: 0 }) .lean();
-        const historial = citas.flatMap(c => c.HistorialCambios || []);
-        res.json(historial);
-    } catch (error) {
-        res.status(502).json({ error: 'Error al obtener historial de citas' });
-    }
-};
-
-//obtener historial-paciente 
-
-const historialpacienteCita = async (req, res)=>{
-    try {
-        const citas = await Cita.find({
-            NombrePaciente: { $regex: req.params.nombre, $options: 'i'}
-        }).sort({ FechaInicio: -1 });
-
-        res.json(citas);
-    } catch (error) {
-      console.error('Error historial paciente:', error);
-        res.status(500).json({ error: 'Error al obtener historial clínico' });
-    }
-}
-
-//Actualizar estado + historial
-
-const actualizarEstadoCita = async (req, res) => {
+exports.actualizarEstadoCita = async (req, res) => {
 
     try {
         const { id } = req.params;
         const { nuevoEstado, motivo, nuevaFecha, usuario } = req.body;
+      
+        if (!isValidId(id)) {
+      return res.status(400).json({ error: 'ID inválido' });
+    }
 
+    if (!nuevoEstado) {
+      return res.status(400).json({ error: 'nuevoEstado es obligatorio' });
+    }
+
+    const usuarioId = req.user?.id || usuario || null;
+
+    const citaOriginal = await Cita.findById(id);
+    if (!citaOriginal) {
+      return res.status(404).json({ mensaje: 'Cita no encontrada' });
+    }
         const update = {
             Estado: nuevoEstado,
             Motivo: motivo,
@@ -131,11 +294,6 @@ const actualizarEstadoCita = async (req, res) => {
             const inicio = new Date(nuevaFecha);
 
             update.FechaInicio = inicio;
-
-            // Recalcular duración correctamente
-            const citaOriginal = await Cita.findById(id);
-            if (!citaOriginal) return res.status(404).json({ mensaje: "Cita no encontrada" });
-
             const duracion = citaOriginal.FechaFin - citaOriginal.FechaInicio;
             update.FechaFin = new Date(inicio.getTime() + duracion);
         }
@@ -146,32 +304,105 @@ const actualizarEstadoCita = async (req, res) => {
             { new: true, runValidators: true }
         );
 
-        res.json({mensaje: 'Cita actualizada correctamente', cita});
+        if (!citaActualizada) {
+          return res.status(404).json({ mensaje: "Cita no encontrada" });
+        }
+
+        try {
+      await HistorialCita.create({
+        CitaId: citaActualizada._id,
+        EstadoAnterior: citaOriginal.Estado,
+        EstadoNuevo: nuevoEstado,
+        Motivo: motivo || '',
+        UsuarioResponsable: usuarioId 
+      });
+    } catch (e) {
+      console.error('No se pudo crear historial externo de cita:', e.message);
+    }
+
+        try {
+          let titulo = 'Actualización de cita';
+          let nivel = 'info';
+
+          if (nuevoEstado === 'Reprogramado') {
+            titulo = 'Cita reprogramada';
+            nivel = 'warning';
+          } else if (nuevoEstado === 'Cancelado') {
+            titulo = 'Cita cancelada';
+            nivel = 'error';
+          } else if (nuevoEstado === 'Finalizado') {
+            titulo = 'Cita finalizada';
+            nivel = 'success';
+          }
+
+        await Notificacion.create({
+          UsuarioId: null, 
+          Titulo: titulo,
+          Mensaje: `Cita de ${citaActualizada.NombrePaciente} (${citaActualizada.Especialista}) ahora está en estado: ${nuevoEstado}. Motivo: ${motivo || 'N/A'}`,
+          Tipo: 'Cita',
+          Nivel: nivel,
+          ReferenciaId: citaActualizada._id,
+          ModeloRelacionado: 'Cita'
+        });
+
+      } catch (e) {
+        console.error('No se pudo crear notificación de cambio de estado de cita:', e.message);
+      }
+
+
+      res.json({mensaje: 'Cita actualizada correctamente', cita});
     } catch (error){
         res.status(500).json({ error: 'Error al actualizar cita', detalles: error.mensaje});
     }
 };
 
-// obtener citas por mes 
+exports.obtenerHistorialGeneral = async (req, res) => {
+    try {
+        const citas = await Cita.find({}, { HistorialCambios: 1 }) .lean();
+        const historial = citas.flatMap(c => c.HistorialCambios||[].map(h => ({...h, CitaId: c._id})));
+        res.json(historial);
+    } catch (error) {
+    console.error(error);
+        res.status(502).json({ error: 'Error al obtener historial de citas' });
+    }
+};
 
-const obtenerCitasPorMes = async (req, res) => {
+exports.historialpaciente = async (req, res)=>{
+    try {
+    const { pacienteId } = req.params;
+
+    if (!isValidId(pacienteId)) {
+      return res.status(400).json({ error: 'PacienteId inválido' });
+    }
+        const citas = await Cita.find({
+            PacienteId: pacienteId
+        }).sort({ FechaInicio: -1 });
+
+        res.json(citas);
+    } catch (error) {
+      console.error('Error historial paciente:', error);
+        res.status(500).json({ error: 'Error al obtener historial clínico' });
+    }
+}
+
+exports.obtenerCitasPorMes = async (req, res) => {
   try {
-    const { año } = req.query;
+    const { anio } = req.query;
 
     const matchStage = {};
 
-    if (año) {
-      const anio = Number(año);
-      if (!isNaN(anio)) {
+    if (anio) {
+      const y = Number(anio);
       matchStage.FechaInicio = {
-        $gte: new Date(anio, 0, 1),
-        $lte: new Date(anio, 11, 31, 23, 59, 59 )
+        $gte: new Date(year, 0, 1),
+        $lte: new Date(year, 11, 31, 23, 59, 59 )
       };
     }
-    }
 
-    const resultado = await Cita.aggregate([
-      { $match: matchStage },
+    const resultado = [];
+
+    resultado.push({ $match: matchStage}),
+    resultado.push(
       {
         $group: {
           _id: { $month: "$FechaInicio" },
@@ -180,14 +411,16 @@ const obtenerCitasPorMes = async (req, res) => {
       },
       {
         $project: {
-          mesNumero: "$_id",
+          mes: "$_id",
           cantidad: 1,
           _id: 0
         }
       },
-      {$sort: {mesNumero: 1 }}
-    ]);
-    res.json(resultado);
+      {$sort: {mes: 1 }}
+    );
+    
+    const resultados = await Cita.aggregate(resultado);
+    res.json(resultados);
 
   } catch (error) {
     console.error("Error al obtener citas por mes:", error);
@@ -195,10 +428,7 @@ const obtenerCitasPorMes = async (req, res) => {
   }
 };
 
-
-// citas por rango 
-
-const obtenerCitasPorRangoFechas = async (req, res) => {
+exports.obtenerCitasPorRangoFechas = async (req, res) => {
   try {
     const { inicio, fin, usuario, especialista } = req.query;
 
@@ -206,13 +436,8 @@ const obtenerCitasPorRangoFechas = async (req, res) => {
       return res.status(400).json({ error: 'Se requieren los parámetros "inicio" y "fin"' });
     }
 
-    const fechaInicio = new Date(inicio);
-    const fechaFin = new Date(fin);
-    fechaFin.setHours(23, 59, 59, 999); // incluye todo el día
-
-    // Construir filtro dinámico
     const filtro = {
-      FechaInicio: { $gte: fechaInicio, $lte: fechaFin }
+      FechaInicio: { $gte: new Date(inicio), $lte: new Date(new Date(fin).setHours(23, 59, 59)) }
     };
 
     if (usuario) {
@@ -231,21 +456,18 @@ const obtenerCitasPorRangoFechas = async (req, res) => {
     }
   };
 
-// verificacion de conflicto cita
-
-const verificarConflictoCita = async (req, res) => {
+exports.verificarConflictoCita = async (req, res) => {
       try {
-        const { especialista, inicio, fin, tipoEvento, sede, idCita } = req.query;
+        const { especialista, inicio, fin, idCita, tipoEvento, sede } = req.query;
 
         if (!especialista || !inicio || !fin)
             return res.status(400).json({ error: 'Faltan parámetros requeridos' });
 
-        const fechaInicio = new Date(inicio);
-        const fechaFin = new Date(fin);
-
         const filtro = {
-            Especialista: especialista,
-            $or: [{ FechaInicio: { $lt: fechaFin }, FechaFin: { $gt: fechaInicio } }]
+          Especialista: especialista,
+          FechaInicio: { $lt: new Date(fin) }, 
+          FechaFin: { $gt: new Date(inicio) },
+          Estado: { $in: ['Programado', 'Reprogramado']}
         };
 
         if (tipoEvento) filtro.TipoEvento = tipoEvento;
@@ -255,7 +477,7 @@ const verificarConflictoCita = async (req, res) => {
             filtro._id = { $ne: idCita };
         }
 
-        const conflictos = await Cita.find(filtro);
+        const conflictos = (await Cita.find(filtro)).sort({FechaInicio: 1});
 
         res.json({
             conflicto: conflictos.length > 0,
@@ -267,17 +489,4 @@ const verificarConflictoCita = async (req, res) => {
         console.error('Error al verificar conflictos:', error);
         res.status(500).json({ error: 'Error al verificar conflicto de horarios' });
     }
-};
-
-module.exports = {
-  crearCita,
-  obtenerCitas,
-  eliminarCita,
-  actualizarCita,
-  historialpacienteCita,
-  actualizarEstadoCita,
-  obtenerHistorialGeneral,
-  obtenerCitasPorMes,
-  obtenerCitasPorRangoFechas,
-  verificarConflictoCita
 };

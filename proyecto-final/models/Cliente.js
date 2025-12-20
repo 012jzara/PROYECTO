@@ -1,18 +1,13 @@
 const mongoose = require('mongoose');
 
 const ClienteSchema = new mongoose.Schema({
-    nombre: String,
-    dni: String,
-    contacto1: String,
-    contacto2: String,
-    paciente: {
-        nombre: String,
-        especie: String,
-        raza: String,
-        sexo: String,
-        caracter: String,
-        patologias: String
-    }
+    Nombre: { type: String, required: true, trim: true },
+    Dni: { type: String, index: true },
+    Contacto1: { type: String, required: true },
+    Contacto2: { type: String }
+    }, {
+        timestamps: true
 });
 
 module.exports = mongoose.model('Cliente', ClienteSchema);
+
