@@ -13,8 +13,9 @@ const ROLES = {
   USER: 'User'
 };
 
-router.post('/login', auditar('Auth - Login'),auth.login);
+router.post('/login',auth.login);
 router.post('/refresh', auditar('Auth - Refresh Token'),auth.refresh);
 router.post('/logout',auditar('Auth - Logout'), auth.logout);
 
 module.exports = router;
+
