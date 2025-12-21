@@ -45,7 +45,7 @@ const auditar = (accion) => {
         res.on("finish", async () => {
             try {
                 await Log.create({
-                    UsuarioId: req.user?.id || null,
+                    UsuarioId: req.user?.id ?? null,
                     Accion: accion,
                     Detalle: JSON.stringify({
                         body: req.body,
@@ -71,3 +71,4 @@ module.exports = {
     permitirRoles,
     auditar 
 };
+
