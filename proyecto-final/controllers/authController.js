@@ -4,7 +4,17 @@ const Usuario = require('../models/Usuario');
 const RefreshToken = require('../models/RefreshToken');
 
 function generateAccessToken(user) {
-  return jwt.sign({ id: user._id, Usuario: user.Usuario, Rol: user.Rol }, process.env.JWT_SECRET, { expiresIn: process.env.ACCESS_TOKEN_EXPIRES_IN || '180m' });
+  const secret = process.env.JWT_SECRET;
+
+  if (!secret || secret.trim().length < 10) {
+    throw new Error("JWT_SECRET no está configurado en Render (Environment).");
+  }
+
+  return jwt.sign(
+    { id: user._id, Usuario: user.Usuario, Rol: user.Rol },
+    secret,
+    { expiresIn: process.env.ACCESS_TOKEN_EXPIRES_IN || "180m" }
+  );
 }
 
 function generateRefreshTokenString() {
@@ -134,3 +144,4 @@ exports.logout = async (req, res) => {
     return res.status(500).json({ msg: 'Error en logout' });
   }
 };
+
