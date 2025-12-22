@@ -157,10 +157,6 @@ exports.obtenerCitaPorId = async (req, res) => {
         return res.status(400).json({ error: 'ID inválido' });
       }
       const cita = await Cita.findById(id)
-        .populate('ClienteId')
-        .populate('PacienteId')
-        .populate('VeterinarioId', 'NombreCompleto Usuario')
-        .populate('Especialista', 'NombreCompleto Usuario');
 
       if (!cita) return res.status(404).json({ mensaje: "Cita no encontrada" });
       
@@ -490,3 +486,4 @@ exports.verificarConflictoCita = async (req, res) => {
         res.status(500).json({ error: 'Error al verificar conflicto de horarios' });
     }
 };
+
