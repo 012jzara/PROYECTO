@@ -355,9 +355,8 @@ exports.actualizarEstadoCita = async (req, res) => {
 
 exports.obtenerHistorialGeneral = async (req, res) => {
     try {
-        const citas = await Cita.find({}, { HistorialCambios: 1 }) .lean();
-        const historial = citas.flatMap(c => c.HistorialCambios||[].map(h => ({...h, CitaId: c._id})));
-        res.json(historial);
+    const historial = await HistorialCita.find().sort({ createdAt: -1 });
+    res.json(historial);
     } catch (error) {
     console.error(error);
         res.status(502).json({ error: 'Error al obtener historial de citas' });
@@ -391,8 +390,8 @@ exports.obtenerCitasPorMes = async (req, res) => {
     if (anio) {
       const y = Number(anio);
       matchStage.FechaInicio = {
-        $gte: new Date(year, 0, 1),
-        $lte: new Date(year, 11, 31, 23, 59, 59 )
+        $gte: new Date(y, 0, 1),
+        $lte: new Date(y, 11, 31, 23, 59, 59 )
       };
     }
 
@@ -487,5 +486,6 @@ exports.verificarConflictoCita = async (req, res) => {
         res.status(500).json({ error: 'Error al verificar conflicto de horarios' });
     }
 };
+
 
 
