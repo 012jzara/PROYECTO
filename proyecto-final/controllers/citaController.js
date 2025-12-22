@@ -346,9 +346,10 @@ exports.actualizarEstadoCita = async (req, res) => {
       }
 
 
-      res.json({mensaje: 'Cita actualizada correctamente', cita});
+     return res.json({ mensaje: 'Cita actualizada correctamente', cita: citaActualizada });
+
     } catch (error){
-        res.status(500).json({ error: 'Error al actualizar cita', detalles: error.mensaje});
+        res.status(500).json({ error: 'Error al actualizar cita', detalles: error.menssage});
     }
 };
 
@@ -486,4 +487,5 @@ exports.verificarConflictoCita = async (req, res) => {
         res.status(500).json({ error: 'Error al verificar conflicto de horarios' });
     }
 };
+
 
