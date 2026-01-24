@@ -31,15 +31,13 @@ const crearTransaccion = async (req, res) => {
       Fecha,
       IdRelacionado,
       ModeloRelacionado,
-      Usuario: UsuarioId
+      Usuario: UsuarioId ?? null
     });
 
     await transaccion.save();
     const creada = await Transaccion.findById(transaccion._id)
       .populate('Usuario', 'Nombre');
-    res.status(201).json(transaccion);
-    
-  const o = creada.toObject();
+      const o = creada.toObject();
     res.status(201).json({
       ...o,
       UsuarioId: o.Usuario?._id ?? null,
@@ -92,7 +90,7 @@ const obtenerTransacciones = async (req, res) => {
         Usuario: o.Usuario?.Nombre ?? null  
       };
     });
-    res.json(lista);
+    return res.json(lista);
 
   } catch (error) {
     console.error('Error al obtener transacciones:', error);
@@ -118,33 +116,22 @@ const obtenerTransaccionPorId = async (req, res) => {
 
 const actualizarTransaccion = async (req, res) => {
   try {
-    const {
-      Tipo,
-      Subtipo,
-      Categoria,
-      Descripcion,
-      Monto,
-      Moneda,
-      MetodoPago,
-      Fecha,
-      IdRelacionado,
-      ModeloRelacionado,
-      Usuario: UsuarioId
-    } = req.body;
+    const body ={...req.body};
     
     if (body.UsuarioId) body.Usuario = body.UsuarioId;
-    const actualizada = await Transaccion.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true }
+    const actualizada = await Transaccion.findByIdAndUpdate(req.params.id, body, { new: true, runValidators: true }
     ).populate('Usuario', 'Nombre');
     if (!actualizada) return res.status(404).json({ mensaje: 'Transaccion no encontrada' });
+  }
       const o = actualizada.toObject();
-    res.json({
+    return res.json({
       ...o,
       UsuarioId: o.Usuario?._id ?? null,
       Usuario: o.Usuario?.Nombre ?? null
     });
   } catch (error) {
     console.error('Error al actualizar transacción:', error);
-    res.status(400).json({
+    return res.status(400).json({
       mensaje: 'Error al actualizar transacción',
       error: error.message
     });
@@ -363,3 +350,4 @@ module.exports = {
   reportePorCategoria
 
 };
+
