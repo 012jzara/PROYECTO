@@ -13,7 +13,7 @@ const crearTransaccion = async (req, res) => {
       Fecha,
       IdRelacionado,
       ModeloRelacionado,
-      Usuario
+      UsuarioId
     } = req.body;
 
     if (!Tipo || Monto == null) {
@@ -31,12 +31,20 @@ const crearTransaccion = async (req, res) => {
       Fecha,
       IdRelacionado,
       ModeloRelacionado,
-      Usuario
+      Usuario: UsuarioId
     });
 
     await transaccion.save();
+    const creada = await Transaccion.findById(transaccion._id)
+      .populate('Usuario', 'Nombre');
     res.status(201).json(transaccion);
-
+    
+  const o = creada.toObject();
+    res.status(201).json({
+      ...o,
+      UsuarioId: o.Usuario?._id ?? null,
+      Usuario: o.Usuario?.Nombre ?? null
+    });
   } catch (error) {
     console.error('Error al guardar transacción:', error);
     res.status(400).json({
@@ -73,8 +81,17 @@ const obtenerTransacciones = async (req, res) => {
     }
 
     const lista = await Transaccion.find(filtro)
+      .populate('Usuario', 'Nombre') 
       .sort({ Fecha: -1 });
-
+    
+    const salida = lista.map(t => {
+      const o = t.toObject();
+      return {
+        ...o,
+        UsuarioId: o.Usuario?._id ?? null,
+        Usuario: o.Usuario?.Nombre ?? null  
+      };
+    });
     res.json(lista);
 
   } catch (error) {
@@ -101,9 +118,30 @@ const obtenerTransaccionPorId = async (req, res) => {
 
 const actualizarTransaccion = async (req, res) => {
   try {
-    const actualizada = await Transaccion.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
-    if (!actualizada) return res.status(404).json({ mensaje: 'Transacci\u00f3n no encontrada' });
-    res.json(actualizada);
+    const {
+      Tipo,
+      Subtipo,
+      Categoria,
+      Descripcion,
+      Monto,
+      Moneda,
+      MetodoPago,
+      Fecha,
+      IdRelacionado,
+      ModeloRelacionado,
+      Usuario: UsuarioId
+    } = req.body;
+    
+    if (body.UsuarioId) body.Usuario = body.UsuarioId;
+    const actualizada = await Transaccion.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true }
+    ).populate('Usuario', 'Nombre');
+    if (!actualizada) return res.status(404).json({ mensaje: 'Transaccion no encontrada' });
+      const o = actualizada.toObject();
+    res.json({
+      ...o,
+      UsuarioId: o.Usuario?._id ?? null,
+      Usuario: o.Usuario?.Nombre ?? null
+    });
   } catch (error) {
     console.error('Error al actualizar transacción:', error);
     res.status(400).json({
@@ -323,4 +361,5 @@ module.exports = {
   obtenerTotales,
   totalesMensuales,
   reportePorCategoria
+
 };
