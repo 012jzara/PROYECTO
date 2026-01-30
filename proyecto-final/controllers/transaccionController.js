@@ -90,7 +90,7 @@ const obtenerTransacciones = async (req, res) => {
         Usuario: o.Usuario?.Nombre ?? null  
       };
     });
-    return res.json(lista);
+    return res.json(salida);
 
   } catch (error) {
     console.error('Error al obtener transacciones:', error);
@@ -121,7 +121,7 @@ const actualizarTransaccion = async (req, res) => {
     if (body.UsuarioId) body.Usuario = body.UsuarioId;
     const actualizada = await Transaccion.findByIdAndUpdate(req.params.id, body, { new: true, runValidators: true }
     ).populate('Usuario', 'Nombre');
-    if (!actualizada) return res.status(404).json({ mensaje: 'Transaccion no encontrada' });
+    if (!actualizada) { return res.status(404).json({ mensaje: 'Transaccion no encontrada' });
   }
       const o = actualizada.toObject();
     return res.json({
@@ -350,4 +350,5 @@ module.exports = {
   reportePorCategoria
 
 };
+
 
